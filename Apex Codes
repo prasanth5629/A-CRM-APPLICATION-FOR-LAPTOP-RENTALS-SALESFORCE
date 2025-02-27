@@ -1,0 +1,40 @@
+--> Apex Handler Class Code (LaptopBookingHandler.cls)
+
+public class LaptopBookingHandler {
+    public static void sendEmailNotification(List<Laptop_Bookings__c> lapList) {
+        List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>();
+
+        for (Laptop_Bookings__c lap : lapList) {
+            if (lap.Email__c != null) {  // Ensure email exists
+                Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+                email.setToAddresses(new List<String>{lap.Email__c});
+                email.setSubject('Welcome to our Laptop Rental Service');
+
+                String body = 'Dear Customer,\n\n';
+                body += 'Welcome to Laptop Rentals! We value your support.\n';
+                body += 'Your Booking Details:\n';
+                body += 'Laptop Amount: ' + lap.Amount__c + '\n';
+                body += 'Core Type: ' + lap.Core_Type__c + '\n';
+                body += 'Laptop Model: ' + lap.Laptop_Name__c + '\n';
+                body += 'Thank you for choosing us!';
+
+                email.setPlainTextBody(body);
+                emails.add(email);
+            }
+        }
+
+        // Send all emails in one request
+        if (!emails.isEmpty()) {
+            Messaging.sendEmail(emails);
+        }
+    }
+}
+______________________________________________________________________________________
+--------------------------------------------------------------------------------------
+--> Apex Trigger Code (LaptopBooking.trigger)
+
+trigger LaptopBooking on Laptop_Bookings__c (After insert, After update) {
+    if (Trigger.isAfter && (Trigger.isInsert || Trigger.isUpdate)) {
+        LaptopBookingHandler.sendEmailNotification(Trigger.new);
+    }
+}
